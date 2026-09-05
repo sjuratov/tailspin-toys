@@ -24,6 +24,63 @@ test.describe('Game Listing and Navigation', () => {
     });
   });
 
+  test.describe('Game Catalog Filters', () => {
+    test.beforeEach(async ({ page }) => {
+      await page.goto('/');
+      await expect(page.getByTestId('games-grid')).toBeVisible();
+    });
+
+    test('should filter by one or more categories and reset the results', async ({ page }) => {
+      const visibleGameCards = page.locator('[data-testid="game-card"]:not([hidden])');
+      const strategyFilter = page.getByRole('checkbox', { name: 'Strategy', exact: true });
+      const puzzleFilter = page.getByRole('checkbox', { name: 'Puzzle', exact: true });
+
+      await test.step('Filter by strategy games', async () => {
+        await strategyFilter.check();
+        await expect(visibleGameCards).toHaveCount(4);
+        await expect(page.getByTestId('filter-results')).toHaveText('4 games shown');
+      });
+
+      await test.step('Add puzzle games to the selected categories', async () => {
+        await puzzleFilter.check();
+        await expect(visibleGameCards).toHaveCount(8);
+        await expect(page.getByTestId('filter-results')).toHaveText('8 games shown');
+      });
+
+      await test.step('Reset all filters', async () => {
+        await page.getByRole('button', { name: 'Clear filters', exact: true }).click();
+        await expect(visibleGameCards).toHaveCount(21);
+        await expect(strategyFilter).not.toBeChecked();
+        await expect(puzzleFilter).not.toBeChecked();
+        await expect(page.getByTestId('filter-results')).toHaveText('21 games shown');
+      });
+    });
+
+    test('should filter by publisher', async ({ page }) => {
+      const visibleGameCards = page.locator('[data-testid="game-card"]:not([hidden])');
+
+      await page.getByRole('combobox', { name: 'Publisher', exact: true }).selectOption({
+        label: 'CodeForge Studios',
+      });
+
+      await expect(visibleGameCards).toHaveCount(6);
+      await expect(page.getByTestId('filter-results')).toHaveText('6 games shown');
+    });
+
+    test('should combine a category and publisher filter', async ({ page }) => {
+      const visibleGameCards = page.locator('[data-testid="game-card"]:not([hidden])');
+
+      await page.getByRole('checkbox', { name: 'Strategy', exact: true }).check();
+      await page.getByRole('combobox', { name: 'Publisher', exact: true }).selectOption({
+        label: 'CodeForge Studios',
+      });
+
+      await expect(visibleGameCards).toHaveCount(1);
+      await expect(visibleGameCards.first()).toContainText('DevOps Dominion');
+      await expect(page.getByTestId('filter-results')).toHaveText('1 game shown');
+    });
+  });
+
   test('should navigate to correct game details page when clicking on a game', async ({ page }) => {
     let gameId: string | null;
     let gameTitle: string | null;
