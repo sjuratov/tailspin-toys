@@ -1,5 +1,6 @@
 ---
 import type { Game } from '../types/game';
+import { clampRating, formatStarRating } from '../lib/ratings';
 import Tag from './Tag.astro';
 import ArrowRight from '../assets/icons/arrow-right.svg';
 
@@ -38,6 +39,17 @@ const { game } = Astro.props;
             )}
 
             <p class="text-slate-400 mb-4 text-sm line-clamp-2" data-testid="game-description">{game.description}</p>
+
+            {game.starRating !== null ? (
+                <div class="flex items-center">
+                    <span class="bg-blue-500/20 text-blue-400 text-sm px-3 py-1 rounded-full" data-testid="game-rating">
+                        <span class="text-yellow-400">{formatStarRating(game.starRating)}</span>
+                        {clampRating(game.starRating).toFixed(1)} / 5
+                    </span>
+                </div>
+            ) : (
+                <span class="text-slate-400 text-sm" data-testid="game-rating">No rating yet</span>
+            )}
 
             <div class="mt-4 text-sm text-blue-400 font-medium flex items-center">
                 <span>View details</span>
