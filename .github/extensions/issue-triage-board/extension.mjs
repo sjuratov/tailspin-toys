@@ -170,13 +170,6 @@ async function addIssueToContext(number) {
     };
 }
 
-function escapeHtml(value) {
-    return String(value ?? "").replace(
-        /[&<>"']/g,
-        (character) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[character],
-    );
-}
-
 function readRequestBody(request) {
     return new Promise((resolve, reject) => {
         let body = "";
