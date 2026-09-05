@@ -1,4 +1,4 @@
-import { and, asc, eq, inArray, type SQL } from 'drizzle-orm';
+import { and, asc, avg, count, eq, inArray, type SQL } from 'drizzle-orm';
 import type { Database } from './db';
 import { games, categories, publishers } from '../../db/schema';
 import type { Game } from '../types/game';
@@ -31,6 +31,14 @@ export interface GameFilters {
     categoryIds?: number[];
     /** Publisher to include in the results. */
     publisherId?: number;
+}
+
+/** Summary metrics for the games catalog. */
+export interface CatalogSummary {
+    /** Total number of games, including games without a rating. */
+    totalGames: number;
+    /** Average rating across rated games, or null when no ratings exist. */
+    averageStarRating: number | null;
 }
 
 function mapGame(row: GameSelectionRow): Game {
@@ -95,6 +103,31 @@ export async function getAllGames(db: Database, filters: GameFilters = {}): Prom
 export async function getAllGameIds(db: Database): Promise<number[]> {
     const rows = await db.select({ id: games.id }).from(games).orderBy(asc(games.title));
     return rows.map((row) => row.id);
+}
+
+/**
+ * Returns deterministic aggregate metrics for the games catalog.
+ *
+ * @param db - Injectable Drizzle database client used by the query.
+ * @returns Total game count and the average of non-null star ratings.
+ */
+export async function getCatalogSummary(db: Database): Promise<CatalogSummary> {
+    const [summary] = await db
+        .select({
+            totalGames: count(games.id),
+            averageStarRating: avg(games.starRating),
+        })
+        .from(games);
+
+    if (!summary) {
+        throw new Error('Catalog summary query returned no result.');
+    }
+
+    return {
+        totalGames: summary.totalGames,
+        averageStarRating:
+            summary.averageStarRating === null ? null : Number(summary.averageStarRating),
+    };
 }
 
 /**
