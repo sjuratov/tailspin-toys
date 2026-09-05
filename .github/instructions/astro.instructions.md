@@ -13,13 +13,13 @@ Astro handles everything in the UI: pages, layouts, components, routing, and con
 
 ```astro
 ---
-// Frontmatter: runs at build time (static output)
 import Layout from '../layouts/Layout.astro';
 import GameCard from '../components/GameCard.astro';
 import { getDatabase } from '../lib/db';
 import { getAllGames } from '../lib/games';
 
 interface Props {
+  /** Page title rendered in the document head. */
   title: string;
 }
 
@@ -43,7 +43,9 @@ const games = await getAllGames(getDatabase());
 
 ```astro
 ---
+/** Public inputs accepted by the page. */
 interface Props {
+  /** Heading rendered above the game list. */
   title: string;
 }
 const { title } = Astro.props;
@@ -92,7 +94,6 @@ const game = await getGameById(getDatabase(), Number(id));
 ---
 
 <Layout title="Game Details - Tailspin Toys">
-  <!-- Game details -->
 </Layout>
 ```
 
@@ -106,11 +107,25 @@ const game = await getGameById(getDatabase(), Number(id));
 
 There is no Svelte/React layer. When a page genuinely needs client behaviour, add a scoped Astro `<script>` using standard DOM APIs. Prefer native interactive elements (`<button>`, `<a href>`) so keyboard and focus behaviour come for free.
 
+## Component contracts and comments
+
+- Every reusable component must document its public `Props` interface with a
+  concise TSDoc comment.
+- Add property comments when a prop's purpose, accepted values, default, or
+  accessibility impact is not self-evident.
+- Comments should explain intent, constraints, or non-obvious decisions, not
+  restate markup, utility classes, or the next line of code.
+- Update or remove stale comments when changing the component they describe.
+- See [`coding-standards.instructions.md`](coding-standards.instructions.md) for
+  repository-wide documentation and formatting rules.
+
 ## TypeScript
 
 - Use TypeScript for type-safe props
-- Define `Props` interface in frontmatter
+- Define and document a `Props` interface in frontmatter
 - Type component imports and helper return values
+- Use four-space indentation, single-quoted strings, semicolons, and trailing
+  commas in multiline TypeScript
 - Run `npx astro sync` to (re)generate route/content types before linting or type-checking
 - `.astro` files are type-checked by `npm run typecheck:astro` (which runs `astro sync` then `astro check`), on the classic `typescript` package. The pure TypeScript in `db/`, `src/lib/`, and `src/types/` is type-checked separately by `npm run typecheck` (the native TS 7 compiler, `tsgo`), which does **not** process `.astro` files.
 

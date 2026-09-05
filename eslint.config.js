@@ -39,5 +39,14 @@ export default [
     languageOptions: {
       parser: tseslint.parser,
     },
+    rules: {
+      // Keep TypeScript formatting consistent without adding a separate formatter.
+      "comma-dangle": ["error", "always-multiline"],
+      "eol-last": ["error", "always"],
+      "object-curly-spacing": ["error", "always"],
+      quotes: ["error", "single", { avoidEscape: true, allowTemplateLiterals: false }],
+      semi: ["error", "always"],
+      "@typescript-eslint/explicit-module-boundary-types": "error",
+    },
   },
 ];
