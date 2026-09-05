@@ -5,6 +5,7 @@ import type { Database } from './db';
 import {
     getAllGames,
     getAllGameIds,
+    getCatalogSummary,
     getGameById,
 } from './games';
 
@@ -85,6 +86,27 @@ async function seedFilterFixtures(db: Database): Promise<{
     return { strategyId, puzzleId, firstPublisherId, secondPublisherId };
 }
 
+async function seedSummaryGames(db: Database, starRatings: Array<number | null>): Promise<void> {
+    const [{ id: categoryId }] = await db
+        .insert(categories)
+        .values({ name: 'Strategy', description: 'strategy' })
+        .returning({ id: categories.id });
+    const [{ id: publisherId }] = await db
+        .insert(publishers)
+        .values({ name: 'Pub One', description: 'publisher' })
+        .returning({ id: publishers.id });
+
+    await db.insert(games).values(
+        starRatings.map((starRating, index) => ({
+            title: `Summary Game ${index + 1}`,
+            description: 'Summary fixture',
+            starRating,
+            categoryId,
+            publisherId,
+        })),
+    );
+}
+
 describe('games data-access helpers', () => {
     let db: Database;
 
@@ -160,5 +182,30 @@ describe('games data-access helpers', () => {
         });
 
         expect(filtered).toEqual([]);
+    });
+
+    it('returns the total and average across rated games', async () => {
+        await seedSummaryGames(db, [4.1, 5, null]);
+
+        const summary = await getCatalogSummary(db);
+
+        expect(summary.totalGames).toBe(3);
+        expect(summary.averageStarRating).toBeCloseTo(4.55);
+    });
+
+    it('returns an empty summary when the catalog has no games', async () => {
+        await expect(getCatalogSummary(db)).resolves.toEqual({
+            totalGames: 0,
+            averageStarRating: null,
+        });
+    });
+
+    it('returns a null average when no games have ratings', async () => {
+        await seedSummaryGames(db, [null, null]);
+
+        await expect(getCatalogSummary(db)).resolves.toEqual({
+            totalGames: 2,
+            averageStarRating: null,
+        });
     });
 });

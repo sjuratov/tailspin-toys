@@ -4,12 +4,14 @@ import GameCard from '../components/GameCard.astro';
 import PageHero from '../components/PageHero.astro';
 import EmptyState from '../components/EmptyState.astro';
 import { getDatabase } from '../lib/db';
-import { getAllGames } from '../lib/games';
+import { getAllGames, getCatalogSummary } from '../lib/games';
 import type { Category, Publisher } from '../types/game';
 
 export const prerender = true;
 
-const games = await getAllGames(getDatabase());
+const db = getDatabase();
+const games = await getAllGames(db);
+const catalogSummary = await getCatalogSummary(db);
 const categories = Array.from(
   games.reduce((uniqueCategories, game) => {
     if (game.category) {
@@ -34,6 +36,30 @@ const publishers = Array.from(
       title="Welcome to Tailspin Toys"
       subtitle="Find your next game! And maybe even back one! Explore our collection!"
     />
+
+    <section
+      class="mb-8 rounded-xl border border-slate-700/50 bg-gradient-to-br from-slate-800 to-slate-900 p-6 shadow-lg"
+      data-testid="catalog-summary"
+      aria-labelledby="catalog-summary-heading"
+    >
+      <h2 id="catalog-summary-heading" class="sr-only">Catalog summary</h2>
+      <dl class="grid gap-6 sm:grid-cols-2">
+        <div>
+          <dt class="text-sm font-medium uppercase tracking-wide text-slate-400">Games in catalog</dt>
+          <dd class="mt-2 text-3xl font-bold text-slate-100" data-testid="catalog-game-count">
+            {catalogSummary.totalGames}
+          </dd>
+        </div>
+        <div>
+          <dt class="text-sm font-medium uppercase tracking-wide text-slate-400">Average star rating</dt>
+          <dd class="mt-2 text-3xl font-bold text-yellow-400" data-testid="catalog-average-rating">
+            {catalogSummary.averageStarRating === null
+              ? 'Not yet rated'
+              : `${catalogSummary.averageStarRating.toFixed(1)} out of 5`}
+          </dd>
+        </div>
+      </dl>
+    </section>
 
     <div data-testid="game-catalog">
       <section
